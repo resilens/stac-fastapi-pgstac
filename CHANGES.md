@@ -5,6 +5,7 @@
 ### Added
 
 - Custom JWT auth middleware for usage with Resilens App Backend JWKS
+- New `Makefile` targets to manage custom (Resilens) container images
 
 ## [6.3.1] - 2026-06-24
 
