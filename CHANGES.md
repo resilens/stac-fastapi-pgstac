@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Custom JWT auth middleware for usage with Resilens App Backend JWKS
+
 ## [6.3.1] - 2026-06-24
 
 ### Fixed
