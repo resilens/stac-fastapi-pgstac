@@ -44,8 +44,8 @@ docker-down-nginx: ## Take down nginx proxy docker compose setup
 docker-down-tests: ## Take down the test image container setup
 	docker compose -f compose.yml -f compose.tests.yml down
 
-.PHONY: docker-down-all ## Take all container setups down
-docker-down-all:
+.PHONY: docker-down-all
+docker-down-all: ## Take all container setups down
 	docker compose down
 	docker compose -f compose.yml -f compose.nginx.yml down
 	docker compose -f compose.yml -f compose.tests.yml down
