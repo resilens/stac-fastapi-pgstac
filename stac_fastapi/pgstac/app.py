@@ -49,6 +49,8 @@ from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
+from stac_fastapi.pgstac.auth.jwt_middleware import JWTAuthMiddleware, get_jwt_middleware_kwargs
+
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +251,12 @@ api = StacApi(
     ],
     health_check=health_check,  # type: ignore [arg-type]
 )
+
 app = api.app
+
+_jwt_kwargs = get_jwt_middleware_kwargs()
+if _jwt_kwargs:
+    app.add_middleware(JWTAuthMiddleware, **_jwt_kwargs)
 
 
 def run():
