@@ -12,68 +12,72 @@ run = docker compose run --rm \
 
 runtests = docker compose -f compose.yml -f compose.tests.yml run --rm tests
 
+.PHONY: help
+help: ## Show this help message
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make \033[36m<target>\033[0m\n"} \
+	     /^### / { printf "\n\033[1;33m%s\033[0m\n", substr($$0, 5) } \
+	     /^[a-zA-Z0-9_.-]+:.*?##/ { printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2 }' \
+	     $(MAKEFILE_LIST)
+
+### Docker
 .PHONY: image
-image:
+image: ## Build docker image
 	docker compose build
 
 .PHONY: image-tests
-image-tests:
+image-tests: ## Build image for tests
 	docker compose -f compose.yml -f compose.tests.yml build
 
 .PHONY: docker-run
-docker-run: image
+docker-run: image ## Run the docker image
 	docker compose up
 
-.PHONY: docker-run-nginx-proxy
-docker-run-nginx-proxy: image
+.PHONY: docker-run-nginx-proxy 
+docker-run-nginx-proxy: image ## Run the image with nginx proxy
 	docker compose -f compose.yml -f compose.nginx.yml up
 
-.PHONY: docker-down
-docker-down:
-	docker compose down
-
 .PHONY: docker-down-nginx
-docker-down-nginx:
+docker-down-nginx: ## Take down nginx proxy docker compose setup
 	docker compose -f compose.yml -f compose.nginx.yml down
 
 .PHONY: docker-down-tests
-docker-down-tests:
+docker-down-tests: ## Take down the test image container setup
 	docker compose -f compose.yml -f compose.tests.yml down
 
-.PHONY: docker-down-all
+.PHONY: docker-down-all ## Take all container setups down
 docker-down-all:
 	docker compose down
 	docker compose -f compose.yml -f compose.nginx.yml down
 	docker compose -f compose.yml -f compose.tests.yml down
 
-.PHONY: docker-shell
-docker-shell:
-	$(run) /bin/bash
-
+### Tests
 .PHONY: test
-test:
+test: ## Run tests in dedicated container
 	$(runtests) /bin/bash -c 'export && python -m pytest /app/tests/ --log-cli-level $(LOG_LEVEL)'
 
+.PHONY: pytest
+pytest: install ## Run pytest (on host)
+	uv run pytest
+
 .PHONY: test-catalogs
-test-catalogs:
+test-catalogs: ## Run Catalog Tests
 	$(runtests) python -m pytest /app/tests/extensions/test_catalogs.py -v --log-cli-level $(LOG_LEVEL)
 
+### Database
 .PHONY: run-database
-run-database:
+run-database: ## Run database service
 	docker compose run --rm database
 
 .PHONY: load-joplin
-load-joplin:
+load-joplin: ## Run joplin
 	python scripts/ingest_joplin.py http://localhost:8082
 
+### Development
 .PHONY: install
-install:
+install: ## Install/sync the dependencies
 	uv sync --dev
 
-.PHONY: pytest
-pytest: install
-	uv run pytest
-
+### Docs
 .PHONY: docs
-docs:
+docs: ## Build docs
 	uv run --group docs mkdocs build -f docs/mkdocs.yml
