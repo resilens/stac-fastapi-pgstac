@@ -22,6 +22,9 @@ services:
       - ENABLE_TRANSACTIONS_EXTENSIONS=${ENABLE_TRANSACTIONS_EXTENSIONS:-false}
       - ENABLE_CATALOGS_EXTENSION=${ENABLE_CATALOGS_EXTENSION:-false}
       - CORS_HEADERS=Authorization,Content-Type
+      - ENABLE_JWT_AUTH=False
+      # - JWKS_URL=http://127.0.0.1:54321/auth/v1/.well-known/jwks.json
+      # - JWT_ISSUER=http://127.0.0.1:54321/auth/v1
     ports:
       - "8082:8082"
     volumes:
