@@ -82,13 +82,16 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 def get_jwt_middleware_kwargs() -> dict | None:
     """Build kwargs for the middleware from environment variables.
 
-    Returns None if auth is disabled, so app.py can skip registration cleanly
-    (useful for local dev without a Supabase project).
+    Returns None if auth is disabled, so app.py can skip registration cleanly.
     """
     if os.environ.get("ENABLE_JWT_AUTH", "false").lower() not in ("true", "1", "yes"):
         return None
 
-    jwks_url = os.environ["JWKS_URL"]
+    jwks_url = os.environ.get("JWKS_URL", None)
+    
+    if not jwks_url:
+        raise ValueError("Missing required JWKS url environment variable!")
+
     return {
         "jwks_url": jwks_url,
         "audience": os.environ.get("JWT_AUDIENCE", "authenticated"),
