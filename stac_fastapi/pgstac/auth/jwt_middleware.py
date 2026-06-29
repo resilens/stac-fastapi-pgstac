@@ -1,3 +1,4 @@
+import anyio
 import os
 from typing import Iterable
 
@@ -44,6 +45,18 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         # (e.g. unseen kid, expected after Supabase rotates keys).
         self._jwk_client = PyJWKClient(jwks_url, cache_keys=True, lifespan=jwks_cache_ttl_seconds)
 
+    def _verify(self, token):
+        signing_key = self._jwk_client.get_signing_key_from_jwt(token)
+        return jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["RS256", "ES256"],
+            audience=self.audience,
+            issuer=self.issuer,
+            options={"require": ["exp", "sub"]},
+        )
+
+
     async def dispatch(self, request: Request, call_next):
         if request.method == "OPTIONS" or request.url.path in self.open_paths:
             return await call_next(request)
@@ -58,15 +71,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         token = auth_header.split(" ", 1)[1].strip()
 
         try:
-            signing_key = self._jwk_client.get_signing_key_from_jwt(token)
-            payload = jwt.decode(
-                token,
-                signing_key.key,
-                algorithms=["RS256", "ES256"],
-                audience=self.audience,
-                issuer=self.issuer,
-                options={"require": ["exp", "sub"]},
-            )
+            payload = await anyio.to_thread.run_sync(self._verify, token)
         except jwt.ExpiredSignatureError:
             return JSONResponse({"detail": "Token expired"}, status_code=401)
         except jwt.PyJWKClientError as exc:
