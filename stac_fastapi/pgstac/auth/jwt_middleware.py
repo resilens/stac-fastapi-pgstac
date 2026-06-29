@@ -68,13 +68,11 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
                 options={"require": ["exp", "sub"]},
             )
         except jwt.ExpiredSignatureError:
-            print("Expired")
             return JSONResponse({"detail": "Token expired"}, status_code=401)
         except jwt.PyJWKClientError as exc:
             # e.g. unknown kid, JWKS endpoint unreachable
             return JSONResponse({"detail": f"Could not verify token: {exc}"}, status_code=401)
         except jwt.InvalidTokenError as exc:
-            print("invalid token")
             return JSONResponse({"detail": f"Invalid token: {exc}"}, status_code=401)
 
         request.state.user = payload
