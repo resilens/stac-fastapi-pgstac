@@ -81,3 +81,36 @@ install: ## Install/sync the dependencies
 .PHONY: docs
 docs: ## Build docs
 	uv run --group docs mkdocs build -f docs/mkdocs.yml
+
+### Deploy
+GCP_PROJECT_ID ?= resilens-backend
+GCP_REGION ?= europe-west6
+
+REGISTRY := europe-west6-docker.pkg.dev/resilens-backend/resilens-app
+
+IMAGE ?= $(REGISTRY)/stac-fastapi-pgstac
+IMAGE_TAG ?= resilens
+VERSION ?= $(shell cat VERSION)
+
+.PHONY: print-env
+print-env: ## Print resolved deploy variables
+	@echo "GCP_PROJECT_ID = $(GCP_PROJECT_ID)"
+	@echo "GCP_REGION     = $(GCP_REGION)"
+	@echo "REGISTRY       = $(REGISTRY)"
+	@echo "IMAGE          = $(IMAGE):$(VERSION)-$(IMAGE_TAG)"
+	@echo "VERSION        = $(VERSION)"
+
+.PHONY: build
+build: ## Build production docker image
+	docker buildx build --load \
+		--platform=linux/amd64 \
+		-t $(IMAGE):$(VERSION)-$(IMAGE_TAG) \
+		.
+
+.PHONY: push
+push: ## Push production image to Artifacts Registry
+	docker push $(IMAGE):$(VERSION)-$(IMAGE_TAG)
+
+.PHONY: prune
+prune: ## Clean up docker images
+	docker image rm $(IMAGE):$(VERSION)-$(IMAGE_TAG) || true
